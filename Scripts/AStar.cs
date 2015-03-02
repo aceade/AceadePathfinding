@@ -46,11 +46,13 @@ public class AStar : MonoBehaviour {
 
 		startTime = Time.time;
 
-		Loom.RunAsync(()=> {
+		// I have commented out the calls to the pathfinding plugin I use.
+		// I recommend running the following inside a separate thread
+//		Loom.RunAsync(()=> {
 
 			findPath(transform.position, position);
 
-		});
+//		});
 	}
 
 	void findPath(Vector3 start, Vector3 end)
@@ -100,10 +102,13 @@ public class AStar : MonoBehaviour {
 	void buildPath()
 	{
 
-		Loom.QueueOnMainThread(()=>
-		                       {
-			// send the path to the finite state machine here
-		});
+//		Loom.QueueOnMainThread(()=>
+//		{
+			// send the path to the external class here
+			// If using a multithreading package, don't forget
+			// to queue that on the main thread
+
+//		});
 	}
 
 	/*
@@ -124,7 +129,7 @@ public class AStar : MonoBehaviour {
 		return Mathf.RoundToInt(Vector3.Distance(firstNode.position, secondNode.position));
 	}
 
-	// at the moment, this is just for debugging.
+	// at the moment, this is just for debugging, confirming that the mesh has been generated
 	void OnGUI()
 	{
 		GUI.skin.box.wordWrap = true;
