@@ -26,7 +26,7 @@ the Vector3 struct. The reason for this is that saving and loading meshes relies
 struct is not serialisable. The original post was found at http://goo.gl/5XKomt
 
 The AStar Class is a (currently incomplete) implementation of the standard A* path-finding algorithm. This can be extended
-as you see fit. This may require some form of multithreading, and I will upload the plugin I use for this.
+as you see fit. This may require some form of multithreading, and I will upload the plugin I use for this (once I figure out how to add external folders to my repository).
 
 ## Terms of Use
 The code and assets here are available under the Creative Commons Attribution Licence (CC BY 4.0). In short, you may use
@@ -34,3 +34,6 @@ these assets for your own projects, including commercial projects, but you must 
 
 ## How to contact me
 If you have any suggestions, queries or complaints, send them to me at philiprowlands90@gmail.com
+
+## Credits
+The code here, along with the multithreading plugin I am using myself, was originally based on code from the Unity Gems tutorial website. However, the site appears to have disappeared, so unfortunately I can't link to it.
