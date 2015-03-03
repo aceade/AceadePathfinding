@@ -13,7 +13,9 @@ public class AStar : MonoBehaviour {
 
 	Node currentNode, startNode, endNode;
 
-
+	/// <summary>
+	/// The maximum seek time in milliseconds to prevent an infinite loop.
+	/// </summary>
 	[Tooltip("The maximum seek time in milliseconds")]
 	public float MaximumSeekTime = 500;
 
@@ -27,7 +29,9 @@ public class AStar : MonoBehaviour {
 
 	Dictionary<Node, int> openList = new Dictionary<Node, int>();
 
-	Dictionary<Node, Node>closedList = new Dictionary<Node, Node>();
+	List<Node> closedList = new List<Node>();
+
+	Dictionary<Node, Node>visitedNodes = new Dictionary<Node, Node>();
 
 	List<Node> path = new List<Node>();
 
@@ -55,14 +59,23 @@ public class AStar : MonoBehaviour {
 //		});
 	}
 
+	/// <summary>
+	/// Finds the path between the two parts.
+	/// </summary>
+	/// <param name="start">Start.</param>
+	/// <param name="end">End.</param>
 	void findPath(Vector3 start, Vector3 end)
 	{
+		Debug.Log("Looking for a path from " + start + " to " + end);
+
 		startNode = navMesh.getNodeFromPosition(start);
 		endNode = navMesh.getNodeFromPosition(end);
 
 		totalScore = 0;
 		openList.Clear();
 		closedList.Clear();
+		visitedNodes.Clear();
+		path.Clear();
 
 		currentNode = startNode;
 		totalScore = calculateDistanceCost(startNode, endNode);
@@ -70,19 +83,26 @@ public class AStar : MonoBehaviour {
 
 		while (openList.Count > 0)
 		{
+			// choose the lowest-cost node as the current Node
+			currentNode = openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
+
+			// add exit conditions here.
 			if ((Time.time - startTime) > MaximumSeekTime || currentNode == endNode)
 			{
-				buildPath();
+				buildPath(currentNode, startNode);
 				break;
 			}
 
-			currentNode = openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
+
+			// get the neighbours of this node
 			List<Node> currentNeighbours = currentNode.neighbours;
 
 			for (int i = 0; i < currentNeighbours.Count; i++)
 			{
 				Node currentNeighbour = currentNeighbours[i];
-				if (currentNeighbour.isWalkable == false || closedList.ContainsKey(currentNeighbour) )
+
+				// skip this neighbour if it isn't walkable or has already been considered
+				if (currentNeighbour.isWalkable == false || closedList.Contains(currentNeighbour) )
 					continue;
 
 				if (openList.ContainsKey(currentNeighbour) == false)
@@ -90,23 +110,47 @@ public class AStar : MonoBehaviour {
 					int tempGScore = calculateDistanceCost(currentNode, currentNeighbour);
 					int tempFScore = calculateDistanceCost(currentNeighbour, endNode);
 
-					openList.Add(currentNeighbour, tempGScore + tempFScore);
+					totalScore = tempGScore + tempFScore;
+
+					openList.Add(currentNeighbour, totalScore);
+
+					visitedNodes[currentNeighbour] = currentNode;
 				}
 			}
+
+			// remove the current node from further consideration.
+			openList.Remove(currentNode);
+			closedList.Add (currentNode);
 
 
 		}
 
 	}
 
-	void buildPath()
-	{
 
+	/// <summary>
+	/// Builds the path by tracing back along the visited nodes
+	/// </summary>
+	void buildPath(Node finalNode, Node beginningNode)
+	{
+		Debug.Log("Retracing the path");
+		Node thisNode = finalNode;
+
+		while (thisNode != beginningNode)
+		{
+			Node tempNode = visitedNodes[thisNode];
+			path.Add (tempNode);
+			tempNode = thisNode;
+		}
+
+		Debug.Log("Built a path of " + path.Count + " noeds");
+
+		// send the path to the external class here
+		// If using a multithreading package, don't forget
+		// to queue that on the main thread
 //		Loom.QueueOnMainThread(()=>
 //		{
-			// send the path to the external class here
-			// If using a multithreading package, don't forget
-			// to queue that on the main thread
+			
 
 //		});
 	}
@@ -129,7 +173,10 @@ public class AStar : MonoBehaviour {
 		return Mathf.RoundToInt(Vector3.Distance(firstNode.position, secondNode.position));
 	}
 
-	// at the moment, this is just for debugging, confirming that the mesh has been generated
+#if UNITY_EDITOR
+
+	// this is only called in the Editor for debugging purposes,
+	// confirming that the navigation mesh has been generated.
 	void OnGUI()
 	{
 		GUI.skin.box.wordWrap = true;
@@ -139,4 +186,5 @@ public class AStar : MonoBehaviour {
 			GUI.Box(new Rect(20, 200, 100, 100), "Nav mesh has " + navMesh.nodes.Keys.Count + " positions" );
 		}
 	}
+#endif
 }
