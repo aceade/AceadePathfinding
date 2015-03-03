@@ -25,8 +25,11 @@ The SerializableVector3 script was taken from a post on the Unity3D forums, and 
 the Vector3 struct. The reason for this is that saving and loading meshes relies on serialisation, but the default Vector3
 struct is not serialisable. The original post was found at http://goo.gl/5XKomt
 
-The AStar Class is a (currently incomplete) implementation of the standard A* path-finding algorithm. This can be extended
+The AStar Class is a complete, but currently untested implementation of the standard A* path-finding algorithm. This can be extended
 as you see fit. This may require some form of multithreading, and I will upload the plugin I use for this (once I figure out how to add external folders to my repository).
+
+## How to use this
+Clone it with git, or download as a zip folder to the desktop. Once you have it, copy the folder into your Unity project, underneath the Assets folder.
 
 ## Terms of Use
 The code and assets here are available under the Creative Commons Attribution Licence (CC BY 4.0). In short, you may use
@@ -37,3 +40,4 @@ If you have any suggestions, queries or complaints, send them to me at philiprow
 
 ## Credits
 The code here, along with the multithreading plugin I am using myself, was originally based on code from the Unity Gems tutorial website. However, the site appears to have disappeared, so unfortunately I can't link to it.
+
