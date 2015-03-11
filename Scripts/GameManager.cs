@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour {
 
 	private static string savePath = Application.dataPath;
 
-	private static string navSavePath = savePath +  "/Pathfinding/Meshes";
+	private static string navSavePath = savePath +  "/AceadePathfinding/Meshes";
 	
 
 	/// <summary>

@@ -14,7 +14,7 @@ using System.Linq;
 public class BuildNavMesh : MonoBehaviour {
 
 
-	private Vector3 topLeftCorner;
+	private Vector3 bottomLeftCorner;
 
 	private Bounds cubeBounds;
 
@@ -40,8 +40,10 @@ public class BuildNavMesh : MonoBehaviour {
 	public void BuildMesh()
 	{
 		cubeBounds = GetComponent<Collider>().bounds;
-		topLeftCorner = cubeBounds.center - cubeBounds.extents
+		bottomLeftCorner = cubeBounds.center - cubeBounds.extents
 			+ (Vector3.up * cubeBounds.size.y);
+
+		Debug.Log("The bottom left corner is " + bottomLeftCorner);
 
 		theMesh = new NavigationMesh();
 		theMesh.SetName(gameObject.name);
@@ -49,11 +51,11 @@ public class BuildNavMesh : MonoBehaviour {
 		width = cubeBounds.size.x / cellSize;
 		length = cubeBounds.size.z / cellSize;
 
-		Vector3 tempPos = topLeftCorner;
+		Vector3 tempPos = bottomLeftCorner;
 
-		for (float x = topLeftCorner.x; x <= width; x += cellSize)
+		for (float x = bottomLeftCorner.x; x <= width; x += cellSize)
 		{
-			for (float z = topLeftCorner.z; z <= length; z += cellSize)
+			for (float z = bottomLeftCorner.z; z <= length; z += cellSize)
 			{
 				tempPos.x = x + cellSize/2;
 				tempPos.z = z + cellSize/2;
@@ -73,17 +75,20 @@ public class BuildNavMesh : MonoBehaviour {
 					else
 						newNode.isWalkable = false;
 
-					newNode.height = Mathf.Clamp(topLeftCorner.y - hitPoint.y, minCellHeight, maxCellHeight);
+					newNode.height = Mathf.Clamp(bottomLeftCorner.y - hitPoint.y, minCellHeight, maxCellHeight);
 
 					Bounds hitBounds = hit.collider.bounds;
-					if ( topLeftCorner.y - (hitBounds.size.y + hitPoint.y) > minCellHeight )
+//					Debug.Log(hitBounds.size.y);
+					if ( bottomLeftCorner.y - (hitBounds.extents.y + hitPoint.y) >= minCellHeight )
 					{
-						hitPoint.y -= hitBounds.size.z;
-						if (Physics.Raycast(hitPoint, Vector3.down, out hit))
+
+						Vector3 underPos = hitPoint + (Vector3.down * hitBounds.size.y);
+
+						if (Physics.Raycast(underPos, Vector3.down, out hit))
 						{
 							Debug.Log("New node under an obstacle at " + hit.point);
 							Node underNode = new Node();
-							newPos = new SerializableVector3(hitPoint.x, hitPoint.y, hitPoint.z);
+							newPos = new SerializableVector3(hit.point.x, hit.point.y, hit.point.z);
 							underNode.position = newPos;
 							theMesh.AddNode (newPos, underNode);
 
@@ -108,6 +113,10 @@ public class BuildNavMesh : MonoBehaviour {
 		{
 			FindNeighbours(node);
 		}
+
+
+//		FixNeighbours();
+
 		// add this to the list of meshes
 		GameManager.AddNavMesh(theMesh);
 
@@ -164,6 +173,38 @@ public class BuildNavMesh : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// Fixs the neighbours: any that have no walkable neighbours are removed,
+	/// and those that have more than one unwalkable are themselves made not walkable
+	/// to add some space around obstacles
+	/// </summary>
+	void FixNeighbours()
+	{
+		List<Node> unwalkableNodes = theMesh.nodes.Values.Where(d=> d.isWalkable == false).ToList();
+
+		foreach (Node theNode in unwalkableNodes)
+		{
+			List<Node> neighbours = theNode.neighbours;
+			foreach (Node neighbour in neighbours)
+			{
+				if (neighbour.isWalkable == true)
+					neighbour.isWalkable = false;
+			}
+		}
+
+		unwalkableNodes = theMesh.nodes.Values.Where(d=> d.isWalkable == false).ToList();
+
+		foreach (Node theNode in unwalkableNodes)
+		{
+			int walkableNeighbours = theNode.neighbours.Where(d=> d.isWalkable == true).Count();
+			if (walkableNeighbours == 0)
+			{
+				theMesh.nodes.Remove(theNode.position);
+			}
+		}
+
+	}
+
 	void OnDrawGizmosSelected()
 	{
 		if (theMesh == null ) 
@@ -173,11 +214,9 @@ public class BuildNavMesh : MonoBehaviour {
 		foreach (SerializableVector3 position in theMesh.nodes.Keys)
 		{
 			Node theNode = theMesh.getNodeFromPosition(position);
-			Gizmos.DrawCube(position, Vector3.one * 0.75f);
-			if (theNode.isWalkable == true)
-				Gizmos.color = Color.green;
-			else
-				Gizmos.color = Color.red;
+			Gizmos.color = theNode.isWalkable ? Color.green: Color.red;
+			Gizmos.DrawCube(position, Vector3.one * cellSize * 0.75f);
+
 		}
 	}
 
