@@ -2,10 +2,16 @@
 using System.Collections;
 using System.Collections.Generic;
 
+/// <summary>
+/// A sample finite-state machine for the agents.
+/// </summary>
+
 public class AgentStateMachine : MonoBehaviour {
 
 
-
+	///<summary>
+	/// The possible states in which an agent can be
+	/// </summary>
 	public enum AgentStates
 	{
 		moving,
@@ -18,8 +24,10 @@ public class AgentStateMachine : MonoBehaviour {
 
 	int currentStep;
 
+	[Tooltip("How far should an agent be from their next step before they change")]
 	public float stepChangeDistance = 0.5f;
 
+	// the class that handles movement
 	MoveAgent moveClass;
 
 	private Transform myTrans;
@@ -42,9 +50,16 @@ public class AgentStateMachine : MonoBehaviour {
 			break;
 		case AgentStates.moving:
 
+			// show the path if inside the Editor
+# if UNITY_EDITOR
+			showPath();
+#endif
+
 			// set the move target to the next position
 			Vector3 nextStep = agentPath[currentStep].position;
 			moveClass.moveTarget = nextStep;
+			myTrans.forward = (nextStep - myPos);
+
 			if (Vector3.Distance(nextStep, myPos) < stepChangeDistance)
 			{
 				if (currentStep < agentPath.Count)
@@ -57,6 +72,16 @@ public class AgentStateMachine : MonoBehaviour {
 			}
 
 			break;
+		}
+	}
+
+	void showPath()
+	{
+		Vector3 pathZero = agentPath[0].position;
+		foreach (Node theNode in agentPath)
+		{
+			Debug.DrawLine(pathZero, theNode.position);
+			pathZero = theNode.position;
 		}
 	}
 

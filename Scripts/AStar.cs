@@ -35,10 +35,15 @@ public class AStar : MonoBehaviour {
 
 	List<Node> path = new List<Node>();
 
+	AgentStateMachine stateMachine;
+
+
 	// Use this for initialization
 	void Start () 
 	{
-		navMesh = GameManager.currentNavMesh;
+		navMesh = GameManager.getCurrentNavMesh();
+		stateMachine = GetComponent<AgentStateMachine>();
+		Debug.Log(navMesh + ", " + stateMachine);
 	}
 
 	/// <summary>
@@ -49,14 +54,15 @@ public class AStar : MonoBehaviour {
 	{
 
 		startTime = Time.time;
+		Vector3 start = transform.position;
 
 		// I have commented out the calls to the pathfinding plugin I use.
 		// I recommend running the following inside a separate thread
-//		Loom.RunAsync(()=> {
+		Loom.RunAsync(()=> {
 
-			findPath(transform.position, position);
+			findPath(start, position);
 
-//		});
+		});
 	}
 
 	/// <summary>
@@ -70,6 +76,8 @@ public class AStar : MonoBehaviour {
 
 		startNode = navMesh.getNodeFromPosition(start);
 		endNode = navMesh.getNodeFromPosition(end);
+
+		Debug.Log("The start and end nodes are " +startNode + " and " + endNode );
 
 		totalScore = 0;
 		openList.Clear();
@@ -85,9 +93,10 @@ public class AStar : MonoBehaviour {
 		{
 			// choose the lowest-cost node as the current Node
 			currentNode = openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
+			Debug.Log("Current node is at " + currentNode.position);
 
 			// add exit conditions here.
-			if ((Time.time - startTime) > MaximumSeekTime || currentNode == endNode)
+			if (currentNode == endNode)
 			{
 				buildPath(currentNode, startNode);
 				break;
@@ -95,11 +104,13 @@ public class AStar : MonoBehaviour {
 
 
 			// get the neighbours of this node
-			List<Node> currentNeighbours = currentNode.neighbours;
+			List<Node> currentNeighbours = navMesh.GetNeighboursOfNode(currentNode);
+			Debug.Log(currentNeighbours);
 
 			for (int i = 0; i < currentNeighbours.Count; i++)
 			{
 				Node currentNeighbour = currentNeighbours[i];
+				Debug.Log("Examining the neighbour at " + currentNeighbour.position);
 
 				// skip this neighbour if it isn't walkable or has already been considered
 				if (currentNeighbour.isWalkable == false || closedList.Contains(currentNeighbour) )
@@ -133,14 +144,15 @@ public class AStar : MonoBehaviour {
 	/// </summary>
 	void buildPath(Node finalNode, Node beginningNode)
 	{
-		Debug.Log("Retracing the path");
+		Debug.Log("Retracing the path from " + visitedNodes.Count + " nodes");
 		Node thisNode = finalNode;
 
 		while (thisNode != beginningNode)
 		{
 			Node tempNode = visitedNodes[thisNode];
+			Debug.Log("Adding node at " + tempNode.position.ToString() + " to path");
 			path.Add (tempNode);
-			tempNode = thisNode;
+			thisNode = tempNode;
 		}
 
 		Debug.Log("Built a path of " + path.Count + " noeds");
@@ -148,11 +160,12 @@ public class AStar : MonoBehaviour {
 		// send the path to the external class here
 		// If using a multithreading package, don't forget
 		// to queue that on the main thread
-//		Loom.QueueOnMainThread(()=>
-//		{
+		Loom.QueueOnMainThread(()=>
+		{
 			
+		stateMachine.setPath(path);
 
-//		});
+		});
 	}
 
 	/*

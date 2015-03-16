@@ -11,13 +11,21 @@ using System.Linq;
 [System.Serializable]
 public class NavigationMesh
 {
-	
+	[HideInInspector]
 	public Dictionary<SerializableVector3, Node> nodes = new Dictionary<SerializableVector3, Node>();
 
 	/// <summary>
 	/// The name of the mesh corresponds to the level name
 	/// </summary>
 	public string meshName;
+
+	public float maxCellHeight;
+
+	public float minCellHeight;
+
+	public SerializableVector3 origin;
+
+	public float cellSize;
 
 
 	/// <summary>
@@ -33,14 +41,31 @@ public class NavigationMesh
 			theNode = nodes[requestPos];
 		else
 		{
-			Debug.Log("Need a full check");
+//			Debug.Log("Need a full check");
 			theNode = nodes.Values.Where(d=> 
-			                      d.position.x <= requestPos.x
-			                      && d.position.y <= requestPos.y
-			                      && d.position.z <= requestPos.z).FirstOrDefault();
+			                      (Mathf.Abs(d.position.x - requestPos.x) < cellSize)
+			                      && (Mathf.Abs(d.position.y - requestPos.y) <= maxCellHeight)
+			                      && (Mathf.Abs(d.position.z - requestPos.z) < cellSize) ) .FirstOrDefault();
 		}
 
 		return theNode;
+	}
+
+	/// <summary>
+	/// Gets the neighbours of node. Due to serialisation issues, the list of neighbours
+	/// cannot be stored in the Node class, so this is a work around
+	/// </summary>
+	/// <returns>The neighbours of node.</returns>
+	/// <param name="theNode">The node.</param>
+	public List<Node> GetNeighboursOfNode(Node theNode)
+	{
+		List<Node> neighbours = nodes.Values.Where(d=> Mathf.Abs(d.position.x - theNode.position.x) <= cellSize
+		                                                   &&  Mathf.Abs(d.position.y - theNode.position.y) <= maxCellHeight
+		                                                   &&  Mathf.Abs(d.position.z - theNode.position.z) <= cellSize ).ToList();
+		
+		neighbours.Remove(theNode);
+
+		return neighbours;
 	}
 
 

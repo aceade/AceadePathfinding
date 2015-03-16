@@ -11,10 +11,6 @@ public class Node
 {
 	public SerializableVector3 position;
 
-	// apparently, this exceeds the serialisation limit
-	[System.NonSerialized]
-	public List<Node> neighbours;
-
 	public float height;
 
 	public float illumination;

@@ -31,7 +31,8 @@ public class GameManager : MonoBehaviour {
 	/// <param name="newLevel">New level.</param>
 	public static void ChangeLevel(string newLevel)
 	{
-		currentNavMesh = navMeshes[newLevel];
+		if (navMeshes.ContainsKey(newLevel) )
+			currentNavMesh = navMeshes[newLevel];
 		Application.LoadLevel(newLevel);
 	}
 
@@ -85,6 +86,21 @@ public class GameManager : MonoBehaviour {
 		navMeshFile.Close();
 
 		Debug.Log("Saved the nav meshes to the disk");
+	}
+
+	/// <summary>
+	/// Gets the current nav mesh.
+	/// </summary>
+	/// <returns>The current nav mesh.</returns>
+	public static NavigationMesh getCurrentNavMesh()
+	{
+		if (currentNavMesh == null)
+		{
+			LoadNavMeshes();
+			currentNavMesh = navMeshes[Application.loadedLevelName];
+		}
+
+		return currentNavMesh;
 	}
 
 }

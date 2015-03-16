@@ -47,6 +47,10 @@ public class BuildNavMesh : MonoBehaviour {
 
 		theMesh = new NavigationMesh();
 		theMesh.SetName(gameObject.name);
+		theMesh.maxCellHeight = maxCellHeight;
+		theMesh.minCellHeight = minCellHeight;
+		theMesh.origin = bottomLeftCorner;
+		theMesh.cellSize = cellSize;
 
 		width = cubeBounds.size.x / cellSize;
 		length = cubeBounds.size.z / cellSize;
@@ -86,7 +90,7 @@ public class BuildNavMesh : MonoBehaviour {
 
 						if (Physics.Raycast(underPos, Vector3.down, out hit))
 						{
-							Debug.Log("New node under an obstacle at " + hit.point);
+//							Debug.Log("New node under an obstacle at " + hit.point);
 							Node underNode = new Node();
 							newPos = new SerializableVector3(hit.point.x, hit.point.y, hit.point.z);
 							underNode.position = newPos;
@@ -109,14 +113,6 @@ public class BuildNavMesh : MonoBehaviour {
 
 		CalculateIllumination();
 
-		foreach (Node node in theMesh.nodes.Values)
-		{
-			FindNeighbours(node);
-		}
-
-
-//		FixNeighbours();
-
 		// add this to the list of meshes
 		GameManager.AddNavMesh(theMesh);
 
@@ -133,7 +129,7 @@ public class BuildNavMesh : MonoBehaviour {
 		                                                   &&  Mathf.Abs(d.position.z - theNode.position.z) <= cellSize ).ToList();
 
 		neighbours.Remove(theNode);
-		theNode.neighbours = neighbours;
+		Debug.Log("The node at " + theNode.position + " has this many neighbours: "+ neighbours.Count);
 	}
 
 	/// <summary>
@@ -169,37 +165,6 @@ public class BuildNavMesh : MonoBehaviour {
 
 //				Debug.Log("The illumination at " + affectedNodes[j].position.ToString() + " is " 
 //				          + affectedNodes[j].illumination);
-			}
-		}
-	}
-
-	/// <summary>
-	/// Fixs the neighbours: any that have no walkable neighbours are removed,
-	/// and those that have more than one unwalkable are themselves made not walkable
-	/// to add some space around obstacles
-	/// </summary>
-	void FixNeighbours()
-	{
-		List<Node> unwalkableNodes = theMesh.nodes.Values.Where(d=> d.isWalkable == false).ToList();
-
-		foreach (Node theNode in unwalkableNodes)
-		{
-			List<Node> neighbours = theNode.neighbours;
-			foreach (Node neighbour in neighbours)
-			{
-				if (neighbour.isWalkable == true)
-					neighbour.isWalkable = false;
-			}
-		}
-
-		unwalkableNodes = theMesh.nodes.Values.Where(d=> d.isWalkable == false).ToList();
-
-		foreach (Node theNode in unwalkableNodes)
-		{
-			int walkableNeighbours = theNode.neighbours.Where(d=> d.isWalkable == true).Count();
-			if (walkableNeighbours == 0)
-			{
-				theMesh.nodes.Remove(theNode.position);
 			}
 		}
 
