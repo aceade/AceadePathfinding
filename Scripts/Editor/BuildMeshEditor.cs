@@ -5,13 +5,37 @@ using UnityEditor;
 [CustomEditor(typeof(BuildNavMesh))]	
 public class BuildMeshEditor : Editor {
 
-
+	// a placeholder for a new walkable layer
+	int walkable;
 
 	public override void OnInspectorGUI()
 	{
 		BuildNavMesh meshBuilder = target as BuildNavMesh;
+		
+		// displays the walkable layers, and allows them to be removed
+		for (int i = 0; i < meshBuilder.walkableLayers.Count; i++)
+		{
+			EditorGUILayout.BeginHorizontal();
+			EditorGUILayout.LayerField(meshBuilder.walkableLayers[i]);
+			if (GUILayout.Button("x") )
+				meshBuilder.walkableLayers.RemoveAt(i);
+			EditorGUILayout.EndHorizontal();
+		}
 
-		// toggle light intensity clamping
+		EditorGUILayout.Space();
+
+		// allows the user to add more walkable layers
+		GUILayout.Label("Select walkable layers from below");
+		walkable = EditorGUILayout.LayerField(walkable);
+		if (GUILayout.Button("Add walkable layer"))
+			meshBuilder.walkableLayers.Add (walkable);
+
+		if (GUILayout.Button("Clear Walkable Layers") )
+		{
+			meshBuilder.walkableLayers.Clear();
+		}
+
+		// toggle light intensity clamping - currently doesn't work
 		if(GUILayout.Toggle(meshBuilder.clampIllumination, "Clamp Light Intensity?") )
 		{
 			meshBuilder.ToggleClamping();
