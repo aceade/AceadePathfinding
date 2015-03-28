@@ -30,15 +30,23 @@ public class BuildNavMesh : MonoBehaviour {
 	
 	public List<int> walkableLayers;
 
-	public bool clampIllumination = true;
+	public bool clampIllumination = false;
 
 	NavigationMesh theMesh;
 
 	/// <summary>
-	/// Builds the mesh.
+	/// Builds the mesh, using the full specified values.
 	/// </summary>
-	public void BuildMesh()
+	/// <param name="newCellSize">New cell size.</param>
+	/// <param name="willClampIllumination">If set to <c>true</c> will clamp illumination.</param>
+	/// <param name="maxLightIntensity">Max light intensity.</param>
+	public void BuildMesh(float newCellSize, bool willClampIllumination, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
 	{
+		cellSize = newCellSize;
+		clampIllumination = willClampIllumination;
+		minCellHeight = newMinCellHeight;
+		maxCellHeight = newMaxCellHeight;
+
 		cubeBounds = GetComponent<Collider>().bounds;
 		bottomLeftCorner = cubeBounds.center - cubeBounds.extents
 			+ (Vector3.up * cubeBounds.size.y);
@@ -111,7 +119,7 @@ public class BuildNavMesh : MonoBehaviour {
 			}
 		}
 
-		CalculateIllumination();
+		CalculateIllumination(maxLightIntensity);
 
 		// add this to the list of meshes
 		GameManager.AddNavMesh(theMesh);
@@ -138,9 +146,9 @@ public class BuildNavMesh : MonoBehaviour {
 	/// For the purposes of this, it is assumed that
 	/// only Point Lights are used.
 	/// </summary>
-	void CalculateIllumination()
+	void CalculateIllumination(float upperLightIntensity)
 	{
-		Debug.Log("Is illumination clamped? " + clampIllumination);
+//		Debug.Log("Is illumination clamped? " + clampIllumination);
 		List<Light> lights = GameObject.FindObjectsOfType<Light>().Where(l=> (l.type == LightType.Point)).ToList();
 
 		for (int i = 0; i < lights.Count; i++)
@@ -160,8 +168,8 @@ public class BuildNavMesh : MonoBehaviour {
 				affectedNodes[j].illumination += illumination;
 
 				// Optionally, clamp it to the range [0,1]
-//				if (clampIllumination == true)
-					affectedNodes[j].illumination = Mathf.Clamp(affectedNodes[j].illumination, 0f, 1f);
+				if (clampIllumination == true)
+					affectedNodes[j].illumination = Mathf.Clamp(affectedNodes[j].illumination, 0f, upperLightIntensity);
 
 //				Debug.Log("The illumination at " + affectedNodes[j].position.ToString() + " is " 
 //				          + affectedNodes[j].illumination);
@@ -170,6 +178,7 @@ public class BuildNavMesh : MonoBehaviour {
 
 	}
 
+# if UNITY_EDITOR
 	void OnDrawGizmosSelected()
 	{
 		if (theMesh == null ) 
@@ -184,7 +193,7 @@ public class BuildNavMesh : MonoBehaviour {
 
 		}
 	}
-
+#endif
 
 	public void ToggleClamping()
 	{
