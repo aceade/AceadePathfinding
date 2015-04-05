@@ -42,15 +42,19 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
+# ========================
+# Ignore any Unity-related files
+# ========================
+
 # Unity files
-.unity
+./*.unity
 
 # Textures
-.jpg
-.png
+./Textures/*
 
 #Unity materials
-.mat
+./Materials/*.mat
 
 #Navdata
 .nav
