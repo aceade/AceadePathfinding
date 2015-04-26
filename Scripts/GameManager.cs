@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour {
 
 	private static string savePath = Application.dataPath;
 
-	private static string navSavePath = savePath +  "/AceadePathfinding/Meshes";
+	private static string navSavePath = Application.streamingAssetsPath +  "/AceadePathfinding/navMeshes.nav";
 	
 
 	/// <summary>
@@ -62,7 +62,7 @@ public class GameManager : MonoBehaviour {
 		if (File.Exists(navSavePath + "/NavMeshes.nav") )
 		{
 			BinaryFormatter bf = new BinaryFormatter();
-			var file = File.Open(navSavePath + "/NavMeshes.nav", FileMode.Open);
+			var file = File.Open(navSavePath, FileMode.Open);
 			navMeshes = (Dictionary<string, NavigationMesh>) bf.Deserialize(file);
 			file.Close();
 			Debug.Log("Loaded the navmeshes from the disk");
@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour {
 	public static void SaveNavMeshes()
 	{
 		BinaryFormatter bf = new BinaryFormatter();
-		var navMeshFile = File.Create(navSavePath + "/NavMeshes.nav");
+		var navMeshFile = File.Create(navSavePath);
 
 		bf.Serialize(navMeshFile, navMeshes);
 		navMeshFile.Close();
