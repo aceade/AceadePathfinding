@@ -17,7 +17,8 @@ created at that position. There are also methods to calculate the intensity of a
 
 The GameManager script is a static class that I am using to load NavigationMeshes for each level and save them to the
 disc for future use. It contains a Dictionary of level names and the corresponding NavigationMesh, allowing you to
-pregenerate and then load NavigationMeshes at runtime.
+pregenerate and then load NavigationMeshes at runtime. Currently, this saves the meshes to the StreamingAssets folder
+so that they can be included in the build, so you will need to add a folder for that.
 
 The Preloading script simply preloads everything, and displays a logo. I've included mine as a template.
 
