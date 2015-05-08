@@ -43,9 +43,9 @@ public class NavigationMesh
 		{
 //			Debug.Log("Need a full check");
 			theNode = nodes.Values.Where(d=> 
-			                      (Mathf.Abs(d.position.x - requestPos.x) < cellSize)
+			                      (Mathf.Abs(d.position.x - requestPos.x) < cellSize * 1.5f)
 			                      && (Mathf.Abs(d.position.y - requestPos.y) <= maxCellHeight)
-			                      && (Mathf.Abs(d.position.z - requestPos.z) < cellSize) ) .FirstOrDefault();
+			                      && (Mathf.Abs(d.position.z - requestPos.z) < cellSize * 1.5f) ) .FirstOrDefault();
 		}
 
 		return theNode;
