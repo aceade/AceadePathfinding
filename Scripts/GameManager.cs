@@ -59,7 +59,7 @@ public class GameManager : MonoBehaviour {
 	public static void LoadNavMeshes()
 	{
 
-		if (File.Exists(navSavePath + "/NavMeshes.nav") )
+		if (File.Exists(navSavePath) )
 		{
 			BinaryFormatter bf = new BinaryFormatter();
 			var file = File.Open(navSavePath, FileMode.Open);

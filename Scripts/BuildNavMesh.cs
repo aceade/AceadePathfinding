@@ -34,6 +34,10 @@ public class BuildNavMesh : MonoBehaviour {
 
 	NavigationMesh theMesh;
 
+	List<GameObject> ignoredObjects;
+
+	Dictionary<Node, List<Node>> neighboursOfNodes = new Dictionary<Node, List<Node>>();
+
 	/// <summary>
 	/// Builds the mesh, using the full specified values.
 	/// </summary>
@@ -42,6 +46,15 @@ public class BuildNavMesh : MonoBehaviour {
 	/// <param name="maxLightIntensity">Max light intensity.</param>
 	public void BuildMesh(float newCellSize, bool willClampIllumination, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
 	{
+
+		/*
+		 * Replace this with code to find your own ignored objects
+		 */
+//		ignoredObjects = GameObject.FindObjectsOfType<GameObject>().Where(d=> d.gameObject.layer == LayerMask.NameToLayer("Spammer")).ToList();
+		ignoredObjects = new List<GameObject>();
+		ignoredObjects.Add (GameObject.FindGameObjectWithTag("Player") );
+		EnableUnits(false);
+
 		cellSize = newCellSize;
 		clampIllumination = willClampIllumination;
 		minCellHeight = newMinCellHeight;
@@ -119,25 +132,86 @@ public class BuildNavMesh : MonoBehaviour {
 			}
 		}
 
+		// post processing steps
+		RemoveUselessNodes();
+		GatherNeighbours();
 		CalculateIllumination(maxLightIntensity);
-
+		FixEdges();
+		theMesh.SetNeighbours(neighboursOfNodes);
+		
 		// add this to the list of meshes
 		GameManager.AddNavMesh(theMesh);
+		EnableUnits(true);
 
 	}
 
 	/// <summary>
+	/// Gathers the neighbours of each node.
+	/// </summary
+	void GatherNeighbours()
+	{
+		foreach(Node node in theMesh.nodes.Values)
+		{
+			List<Node> neighbours = FindNeighbours(node, cellSize * 1.5f);
+			neighboursOfNodes.Add (node, neighbours);
+		}
+	}
+	
+	/// <summary>
 	/// Finds the neighbours of the specified node.
 	/// </summary>
 	/// <param name="theNode">The node.</param>
-	void FindNeighbours(Node theNode)
+	List<Node> FindNeighbours(Node theNode, float distance)
 	{
-		List<Node> neighbours = theMesh.nodes.Values.Where(d=> Mathf.Abs(d.position.x - theNode.position.x) <= cellSize
-		                                                   &&  Mathf.Abs(d.position.y - theNode.position.y) <= maxCellHeight
-		                                                   &&  Mathf.Abs(d.position.z - theNode.position.z) <= cellSize ).ToList();
-
+		List<Node> neighbours = theMesh.nodes.Values.Where(d=> Vector3.Distance(theNode.position, d.position) <= distance ).ToList();
+		
 		neighbours.Remove(theNode);
-		Debug.Log("The node at " + theNode.position + " has this many neighbours: "+ neighbours.Count);
+		
+		return neighbours;
+	}
+	
+	/// <summary>
+	/// Fixs the edges.
+	/// </summary>
+	void FixEdges()
+	{
+		Debug.Log("Fixing edges around obstacles");
+		List<Node> affectedNodes = neighboursOfNodes.Keys.Where(d=> neighboursOfNodes[d].Count() < 8).ToList();
+		
+		Debug.Log("There are " + affectedNodes.Count + " nodes beside an obstacle. Total nodes in map: "+ theMesh.nodes.Count);
+		for (int i = 0; i < affectedNodes.Count; i++)
+		{
+			affectedNodes[i].isWalkable = false;
+		}
+	}
+	
+	/// <summary>
+	/// Removes useless and inaccessible nodes.
+	/// </summary>
+	void RemoveUselessNodes()
+	{
+		Debug.Log("Removing useless nodes from the map");
+		List<Node> uselessNodes = new List<Node>();
+		Node theNode;
+		foreach (KeyValuePair<SerializableVector3, Node> pair in theMesh.nodes)
+		{
+			theNode = pair.Value;
+			List<Node> longNeighbours = FindNeighbours(theNode, cellSize * 3f);
+			
+			if (longNeighbours.Count(d=> d.isWalkable == true) == 0)
+			{
+				uselessNodes.Add(theNode);
+			}
+			
+		}
+		
+		Debug.Log(uselessNodes.Count + " useless nodes in the map");
+		
+		for(int i = 0; i < uselessNodes.Count; i++)
+		{
+			neighboursOfNodes.Remove(uselessNodes[i]);
+			theMesh.nodes.Remove(uselessNodes[i].position);
+		}
 	}
 
 	/// <summary>
@@ -176,6 +250,19 @@ public class BuildNavMesh : MonoBehaviour {
 			}
 		}
 
+	}
+
+	/// <summary>
+	/// Toggles the units before and after building.
+	/// </summary>
+	/// <param name="toggle">If set to <c>true</c> toggle.</param>
+	void EnableUnits(bool toggle)
+	{
+		
+		for (int i = 0; i < ignoredObjects.Count; i++)
+		{
+			ignoredObjects[i].SetActive(toggle);
+		}
 	}
 
 # if UNITY_EDITOR

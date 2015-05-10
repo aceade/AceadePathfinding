@@ -58,11 +58,11 @@ public class AStar : MonoBehaviour {
 
 		// I have commented out the calls to the pathfinding plugin I use.
 		// I recommend running the following inside a separate thread
-//		Loom.RunAsync(()=> {
+		Loom.RunAsync(()=> {
 
 			findPath(start, position);
 
-//		});
+		});
 	}
 
 	/// <summary>
@@ -104,7 +104,7 @@ public class AStar : MonoBehaviour {
 
 
 			// get the neighbours of this node
-			List<Node> currentNeighbours = navMesh.GetNeighboursOfNode(currentNode);
+			List<Node> currentNeighbours = navMesh.GetNeighboursOfNode(currentNode, true);
 			Debug.Log(currentNeighbours);
 
 			for (int i = 0; i < currentNeighbours.Count; i++)
@@ -160,12 +160,12 @@ public class AStar : MonoBehaviour {
 		// send the path to the external class here
 		// If using a multithreading package, don't forget
 		// to queue that on the main thread
-//		Loom.QueueOnMainThread(()=>
-//		{
+		Loom.QueueOnMainThread(()=>
+		{
 			
 		stateMachine.setPath(path);
 
-//		});
+		});
 	}
 
 	/*

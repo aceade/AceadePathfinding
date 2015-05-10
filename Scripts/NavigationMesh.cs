@@ -14,6 +14,9 @@ public class NavigationMesh
 	[HideInInspector]
 	public Dictionary<SerializableVector3, Node> nodes = new Dictionary<SerializableVector3, Node>();
 
+	[HideInInspector]
+	public Dictionary<Node, List<Node>> neighboursDict = new Dictionary<Node, List<Node>>();
+
 	/// <summary>
 	/// The name of the mesh corresponds to the level name
 	/// </summary>
@@ -52,19 +55,29 @@ public class NavigationMesh
 	}
 
 	/// <summary>
+	/// Sets the neighbours.
+	/// </summary>
+	/// <param name="newDict">New dict.</param>
+	public void SetNeighbours(Dictionary<Node, List<Node>> newDict)
+	{
+		neighboursDict = newDict;
+	}
+	
+	/// <summary>
 	/// Gets the neighbours of node. Due to serialisation issues, the list of neighbours
 	/// cannot be stored in the Node class, so this is a work around
 	/// </summary>
 	/// <returns>The neighbours of node.</returns>
 	/// <param name="theNode">The node.</param>
-	public List<Node> GetNeighboursOfNode(Node theNode)
+	public List<Node> GetNeighboursOfNode(Node theNode, bool ignoreUnwalkableNodes)
 	{
-		List<Node> neighbours = nodes.Values.Where(d=> Mathf.Abs(d.position.x - theNode.position.x) <= cellSize
-		                                                   &&  Mathf.Abs(d.position.y - theNode.position.y) <= maxCellHeight
-		                                                   &&  Mathf.Abs(d.position.z - theNode.position.z) <= cellSize ).ToList();
+		List<Node> neighbours = neighboursDict[theNode];
 		
-		neighbours.Remove(theNode);
-
+		if (ignoreUnwalkableNodes == true)
+		{
+			neighbours.RemoveAll(n=> n.isWalkable == false);
+		}
+		
 		return neighbours;
 	}
 
