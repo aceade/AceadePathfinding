@@ -28,5 +28,7 @@ public abstract class FindPathBase : MonoBehaviour {
 	{
 		mesh = GameManager.getCurrentNavMesh();
 	}
+
+	protected abstract int calculateDistanceCost(Node nodeOne, Node nodeTwo);
 	
 }

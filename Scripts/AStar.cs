@@ -172,7 +172,7 @@ public class AStar : FindPathBase {
 	/// <returns>The distance cost.</returns>
 	/// <param name="firstNode">First node.</param>
 	/// <param name="secondNode">Second node.</param>
-	int calculateDistanceCost(Node firstNode, Node secondNode)
+	protected override int calculateDistanceCost(Node firstNode, Node secondNode)
 	{
 		return Mathf.RoundToInt(Vector3.Distance(firstNode.position, secondNode.position));
 	}
