@@ -7,7 +7,7 @@ using System.Linq;
 /// A standard A* pathfinding algorithm.
 /// </summary>
 
-public class AStar : MonoBehaviour {
+public class AStar : FindPathBase {
 
 	NavigationMesh navMesh;
 
@@ -27,19 +27,10 @@ public class AStar : MonoBehaviour {
 
 	int totalScore = 0;
 
-	Dictionary<Node, int> openList = new Dictionary<Node, int>();
-
-	List<Node> closedList = new List<Node>();
-
-	Dictionary<Node, Node>visitedNodes = new Dictionary<Node, Node>();
-
-	List<Node> path = new List<Node>();
-
 	AgentStateMachine stateMachine;
 
-
 	// Use this for initialization
-	void Start () 
+	protected override void Start () 
 	{
 		navMesh = GameManager.getCurrentNavMesh();
 		stateMachine = GetComponent<AgentStateMachine>();
@@ -50,7 +41,7 @@ public class AStar : MonoBehaviour {
 	/// Sets the agent's destination.
 	/// </summary>
 	/// <param name="position">Position.</param>
-	public void SetDestination(Vector3 position)
+	public override void SetDestination(Vector3 position)
 	{
 
 		startTime = Time.time;
@@ -70,7 +61,7 @@ public class AStar : MonoBehaviour {
 	/// </summary>
 	/// <param name="start">Start.</param>
 	/// <param name="end">End.</param>
-	void findPath(Vector3 start, Vector3 end)
+	protected override void findPath(Vector3 start, Vector3 end)
 	{
 		Debug.Log("Looking for a path from " + start + " to " + end);
 
@@ -80,25 +71,25 @@ public class AStar : MonoBehaviour {
 		Debug.Log("The start and end nodes are " +startNode + " and " + endNode );
 
 		totalScore = 0;
-		openList.Clear();
+		base.openList.Clear();
 		closedList.Clear();
 		visitedNodes.Clear();
 		path.Clear();
 
 		currentNode = startNode;
 		totalScore = calculateDistanceCost(startNode, endNode);
-		openList.Add(currentNode, totalScore);
+		base.openList.Add(currentNode, totalScore);
 
-		while (openList.Count > 0)
+		while (base.openList.Count > 0)
 		{
 			// choose the lowest-cost node as the current Node
-			currentNode = openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
+			currentNode = base.openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
 			Debug.Log("Current node is at " + currentNode.position);
 
 			// add exit conditions here.
 			if (currentNode == endNode)
 			{
-				buildPath(currentNode, startNode);
+				buildPathFrom(currentNode);
 				break;
 			}
 
@@ -116,21 +107,21 @@ public class AStar : MonoBehaviour {
 				if (currentNeighbour.isWalkable == false || closedList.Contains(currentNeighbour) )
 					continue;
 
-				if (openList.ContainsKey(currentNeighbour) == false)
+				if (base.openList.ContainsKey(currentNeighbour) == false)
 				{
 					int tempGScore = calculateDistanceCost(currentNode, currentNeighbour);
 					int tempFScore = calculateDistanceCost(currentNeighbour, endNode);
 
 					totalScore = tempGScore + tempFScore;
 
-					openList.Add(currentNeighbour, totalScore);
+					base.openList.Add(currentNeighbour, totalScore);
 
 					visitedNodes[currentNeighbour] = currentNode;
 				}
 			}
 
 			// remove the current node from further consideration.
-			openList.Remove(currentNode);
+			base.openList.Remove(currentNode);
 			closedList.Add (currentNode);
 
 
@@ -142,12 +133,12 @@ public class AStar : MonoBehaviour {
 	/// <summary>
 	/// Builds the path by tracing back along the visited nodes
 	/// </summary>
-	void buildPath(Node finalNode, Node beginningNode)
+	protected override void buildPathFrom(Node finalNode)
 	{
 		Debug.Log("Retracing the path from " + visitedNodes.Count + " nodes");
 		Node thisNode = finalNode;
 
-		while (thisNode != beginningNode)
+		while (thisNode != startNode)
 		{
 			Node tempNode = visitedNodes[thisNode];
 			Debug.Log("Adding node at " + tempNode.position.ToString() + " to path");
