@@ -49,7 +49,7 @@ Temporary Items
 
 # Unity files
 ./*.unity
-./**/*.meta
+**/*.meta
 
 # Textures
 ./Textures/*
