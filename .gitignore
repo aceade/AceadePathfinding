@@ -48,14 +48,17 @@ Temporary Items
 # ========================
 
 # Unity files
-./*.unity
+**/*.unity
 **/*.meta
 
 # Textures
-./Textures/*
+Textures/*
 
 #Unity materials
-./Materials/*.mat
+Materials/*
+
+#Prefabs
+Prefabs/*
 
 #Navdata
 **/*.nav
