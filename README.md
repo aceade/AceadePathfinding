@@ -43,7 +43,7 @@ The code and assets here are available under the Creative Commons Attribution Li
 these assets for your own projects, including commercial projects, but you must attribute them to me, ideally with a link to the repository.
 
 ## How to contact me
-If you have any suggestions, queries or complaints, send them to me at philiprowlands90@gmail.com
+If you have any suggestions, queries or complaints, send them to at philiprowlands90-at-gmail-dot-com.
 
 ## Credits
 The code here, along with the multithreading plugin I am using myself, was originally based on code from the Unity Gems tutorial website. However, the site appears to have disappeared, so unfortunately I can't link to it.
