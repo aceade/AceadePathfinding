@@ -58,7 +58,7 @@ public class MoveDestination : MonoBehaviour {
 
 	void resetMovement()
 	{
-		agent.GetComponent<AStar>().SetDestination(myTrans.position);
+		agent.GetComponent<FindPathBase>().SetDestination(myTrans.position);
 		canMove = true;
 	}
 }

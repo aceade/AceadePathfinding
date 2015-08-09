@@ -17,4 +17,9 @@ public class Node
 
 	public bool isWalkable;
 
+	public override string ToString()
+	{
+		return position.ToString();
+	}
+
 }
