@@ -32,9 +32,15 @@ public class BuildNavMesh : MonoBehaviour {
 
 	public bool clampIllumination = false;
 
+	/// <summary>
+	/// Toggles whether or not to deploy this to the Dictionary.
+	/// </summary>
+	private bool testOnly;
+
 	NavigationMesh theMesh;
 
-	List<GameObject> ignoredObjects;
+
+	public GameObject[] ignoredObjects;
 
 	Dictionary<Node, List<Node>> neighboursOfNodes = new Dictionary<Node, List<Node>>();
 
@@ -44,15 +50,9 @@ public class BuildNavMesh : MonoBehaviour {
 	/// <param name="newCellSize">New cell size.</param>
 	/// <param name="willClampIllumination">If set to <c>true</c> will clamp illumination.</param>
 	/// <param name="maxLightIntensity">Max light intensity.</param>
-	public void BuildMesh(float newCellSize, bool willClampIllumination, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
+	public void BuildMesh(float newCellSize, bool willClampIllumination, bool willDeploy, GameObject[] objects, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
 	{
-
-		/*
-		 * Replace this with code to find your own ignored objects
-		 */
-//		ignoredObjects = GameObject.FindObjectsOfType<GameObject>().Where(d=> d.gameObject.layer == LayerMask.NameToLayer("Spammer")).ToList();
-		ignoredObjects = new List<GameObject>();
-		ignoredObjects.Add (GameObject.FindGameObjectWithTag("Player") );
+		testOnly = willDeploy;
 		EnableUnits(false);
 
 		cellSize = newCellSize;
@@ -140,7 +140,11 @@ public class BuildNavMesh : MonoBehaviour {
 		theMesh.SetNeighbours(neighboursOfNodes);
 		
 		// add this to the list of meshes
-		GameManager.AddNavMesh(theMesh);
+		if (!testOnly)
+		{
+			GameManager.AddNavMesh(theMesh);
+		}
+
 		EnableUnits(true);
 
 	}
@@ -229,24 +233,39 @@ public class BuildNavMesh : MonoBehaviour {
 		{
 			Light theLight = lights[i];
 			Node theLightNode = theMesh.getNodeFromPosition(theLight.transform.position);
-			List<Node> affectedNodes = theMesh.nodes.Values.Where(d=> Mathf.Abs(d.position.x - theLightNode.position.x) < theLight.range
-			                                               && Mathf.Abs(d.position.z - theLightNode.position.z) < theLight.range ).ToList();
+			List<Node> neighbours = neighboursOfNodes[theLightNode];
+			List<Node> affectedNodes = new List<Node>();
 
 			// loop through nodes affected by this light
-			for (int j = 0; j < affectedNodes.Count; j++)
+			for (int j = 0; j < neighbours.Count; j++)
+			{
+
+				// calculate the direction of the light, then find all nodes along it
+				Vector3 dir = (Vector3)neighbours[i].position - (Vector3)theLightNode.position;
+				Physics.Raycast(theLight.transform.position, dir, out hit, theLight.range);
+				Node endNode = theMesh.getNodeFromPosition(hit.point);
+
+				List<Node> tempNodes = theMesh.nodes.Values.Where(d=> ((Vector3)d.position - (Vector3)theLightNode.position).normalized == dir.normalized).ToList();
+				affectedNodes.AddRange (tempNodes);
+			}
+
+			Debug.Log("The light at " + theLight.transform.position + " affects " + affectedNodes.Count + " nodes");
+
+			// calculate the illumination at those nodes
+			for (int k = 0; k < affectedNodes.Count; k++)
 			{
 
 				// calculate the intensity from this light, and add it to the illumination of the node.
 				float illumination = theLight.intensity / 
-					Vector3.Distance(affectedNodes[j].position, theLightNode.position);
-				affectedNodes[j].illumination += illumination;
+					Vector3.Distance(affectedNodes[k].position, theLightNode.position);
+				affectedNodes[k].illumination += illumination;
 
 				// Optionally, clamp it to the range [0,1]
 				if (clampIllumination == true)
-					affectedNodes[j].illumination = Mathf.Clamp(affectedNodes[j].illumination, 0f, upperLightIntensity);
+				{
+					affectedNodes[k].illumination = Mathf.Clamp(affectedNodes[k].illumination, 0f, upperLightIntensity);
+				}
 
-//				Debug.Log("The illumination at " + affectedNodes[j].position.ToString() + " is " 
-//				          + affectedNodes[j].illumination);
 			}
 		}
 
@@ -259,7 +278,7 @@ public class BuildNavMesh : MonoBehaviour {
 	void EnableUnits(bool toggle)
 	{
 		
-		for (int i = 0; i < ignoredObjects.Count; i++)
+		for (int i = 0; i < ignoredObjects.Length; i++)
 		{
 			ignoredObjects[i].SetActive(toggle);
 		}

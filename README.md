@@ -17,8 +17,8 @@ scene, and casts rays down at regular interval. If the ray hits a collider, the 
 created at that position. There are also methods to calculate the intensity of any Spot Lights at a Node and display the Nodes when the cube is selected.
 I have also added methods to optimise the mesh: any node that does not have walkable neighbours is removed from the mesh, 
 and nodes that are beside an obstacle are marked as unwalkable to keep agents from crashing into the wall. It will also
-temporarily disable GameObjects with a particular level or tag, so it won't accidentally place an unwalkable node above
-a unit's head.
+temporarily disable specific GameObjects so it won't accidentally place an unwalkable node above
+a unit's head, and will be added to the Dictionary of NavMeshes if not specified otherwise.
 
 The GameManager script is a static class that I am using to load NavigationMeshes for each level and save them to the
 disc for future use. It contains a Dictionary of level names and the corresponding NavigationMesh, allowing you to
