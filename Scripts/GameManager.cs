@@ -44,11 +44,15 @@ public class GameManager : MonoBehaviour {
 	public static void AddNavMesh(NavigationMesh mesh)
 	{
 		string name = mesh.meshName;
-		Debug.Log("Adding " + mesh + " for level " + name);
+		Debug.Log(string.Format("Adding {0} for level {1}", mesh, name));
 		if (navMeshes.ContainsKey(name) == false)
+		{
 			navMeshes.Add(name, mesh);
+		}
 		else
+		{
 			navMeshes[name] = mesh;
+		}
 
 		SaveNavMeshes();
 	}
@@ -65,11 +69,11 @@ public class GameManager : MonoBehaviour {
 			var file = File.Open(navSavePath, FileMode.Open);
 			navMeshes = (Dictionary<string, NavigationMesh>) bf.Deserialize(file);
 			file.Close();
-			Debug.Log("Loaded the navmeshes from the disk");
+			Debug.Log(string.Format("Loaded {0} navmeshes from the disk", navMeshes.Count));
 		}
 		else
 		{
-			Debug.LogError("Problem loading meshes from " + navSavePath + "; file does not exist");
+			Debug.LogError(string.Format("Problem loading meshes from {0}; file does not exist", navSavePath));
 		}
 
 	}
@@ -85,7 +89,7 @@ public class GameManager : MonoBehaviour {
 		bf.Serialize(navMeshFile, navMeshes);
 		navMeshFile.Close();
 
-		Debug.Log("Saved the nav meshes to the disk");
+		Debug.Log(string.Format("Saved {0} nav meshes to the disk", navMeshes.Count));
 	}
 
 	/// <summary>

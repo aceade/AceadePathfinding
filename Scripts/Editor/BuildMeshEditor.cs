@@ -25,6 +25,16 @@ public class BuildMeshEditor : Editor {
 	// the maximum light intensity
 	float maxLightIntensity = 1f;
 
+	/// <summary>
+	/// Initializes the <see cref="BuildMeshEditor"/> class.
+	/// 
+	/// Used to load meshes automatically.
+	/// </summary>
+	static BuildMeshEditor()
+	{
+		GameManager.LoadNavMeshes();
+	}
+
 	public override void OnInspectorGUI()
 	{
 		BuildNavMesh meshBuilder = target as BuildNavMesh;
@@ -105,8 +115,13 @@ public class BuildMeshEditor : Editor {
 		// load meshes from the disk, for testing.
 		if (GUILayout.Button ("Load Meshes") )
 		{
-			GameManager.LoadNavMeshes();
+			LoadMeshes();
 		}
+	}
+
+	void LoadMeshes()
+	{
+		GameManager.LoadNavMeshes();
 	}
 	
 }
