@@ -39,8 +39,7 @@ as you see fit. This will require some form of multithreading, and I will upload
 Clone it with git, or download as a zip folder to the desktop. Once you have it, copy the folder into your Unity project, underneath the Assets folder.
 
 ## Terms of Use
-The code and assets here are available under the Creative Commons Attribution Licence (CC BY 4.0). In short, you may use
-these assets for your own projects, including commercial projects, but you must attribute them to me, ideally with a link to the repository.
+The code and assets here are available under the MIT Licence (see the licence file for the full terms).
 
 ## How to contact me
 If you have any suggestions, queries or complaints, send them to at philiprowlands90-at-gmail-dot-com.
