@@ -1,6 +1,6 @@
 # AceadePathfinding
-A pathfinding system that I am developing using Unity 4.6. I plan to use this as a base for several other projects,
-and figure that this might be useful to someone else.
+A pathfinding system that I originally developed using Unity 4.6. I plan to use this as a base for several other projects,
+and figure that this might be useful to someone else. This is a legacy branch, as Unity deprecated several methods in 5.3.
 
 ## Component Overview
 The basic component of this is the Node class. Each Node has several variables: a position, a
