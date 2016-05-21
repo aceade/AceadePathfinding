@@ -30,6 +30,8 @@ public class AgentStateMachine : MonoBehaviour {
 	// the class that handles movement
 	MoveAgent moveClass;
 
+	FindPathBase pathfindingClass;
+
 	private Transform myTrans;
 	Vector3 myPos;
 
@@ -37,6 +39,7 @@ public class AgentStateMachine : MonoBehaviour {
 	void Start () 
 	{
 		moveClass = GetComponent<MoveAgent>();
+		pathfindingClass = GetComponent<FindPathBase>();
 		myTrans = transform;
 		myPos = myTrans.position;
 	}
@@ -51,7 +54,7 @@ public class AgentStateMachine : MonoBehaviour {
 		case AgentStates.moving:
 
 			// show the path if inside the Editor
-# if UNITY_EDITOR
+#if UNITY_EDITOR
 			showPath();
 #endif
 
@@ -97,6 +100,11 @@ public class AgentStateMachine : MonoBehaviour {
 			setState(AgentStates.moving);
 		}
 
+	}
+
+	public void SetDestination(Vector3 position)
+	{
+		pathfindingClass.SetDestination(position);
 	}
 
 	/// <summary>

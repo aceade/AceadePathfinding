@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEditor;
 using System.Collections.Generic;
 
@@ -16,24 +15,14 @@ public class BuildMeshEditor : Editor {
 
 	bool toggleLightClamping;
 
-	// toggles whether or not to add this navMesh
-	// if true, add to the dictionary.
-	bool isTestOnly;
-
 	public GameObject[] objectsToIgnore;
 
 	// the maximum light intensity
 	float maxLightIntensity = 1f;
 
-	/// <summary>
-	/// Initializes the <see cref="BuildMeshEditor"/> class.
-	/// 
-	/// Used to load meshes automatically.
-	/// </summary>
-	static BuildMeshEditor()
-	{
-		GameManager.LoadNavMeshes();
-	}
+	string meshName = "NaveMesh Cube";
+
+	public NavigationMesh navMesh;
 
 	public override void OnInspectorGUI()
 	{
@@ -90,7 +79,7 @@ public class BuildMeshEditor : Editor {
 		// toggle light intensity clamping here
 		EditorGUI.BeginChangeCheck();
 		toggleLightClamping = EditorGUILayout.Toggle("Clamp illumination?", toggleLightClamping);
-		if (toggleLightClamping == true)
+		if (toggleLightClamping)
 		{
 			maxLightIntensity = EditorGUILayout.FloatField("Maximum light intensity", maxLightIntensity);
 			if (maxLightIntensity <= 0)
@@ -102,14 +91,16 @@ public class BuildMeshEditor : Editor {
 		EditorGUI.EndChangeCheck();
 		EditorGUILayout.Space();
 
-		// toggle whether or not to add to the dictionary
-		isTestOnly = EditorGUILayout.Toggle("Used only for testing?", isTestOnly);
-		EditorGUILayout.Space();
+		// get the name here
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("Name of the mesh");
+		meshName = GUILayout.TextField(meshName);
+		GUILayout.EndHorizontal();
 
 		// build the mesh
 		if (GUILayout.Button("Build Mesh"))
 		{
-			meshBuilder.BuildMesh(cellSize, toggleLightClamping, isTestOnly, objectsToIgnore, maxLightIntensity, minCellHeight, maxCellHeight);
+			BuildMesh(meshBuilder);
 		}
 
 		// load meshes from the disk, for testing.
@@ -119,9 +110,20 @@ public class BuildMeshEditor : Editor {
 		}
 	}
 
+	void BuildMesh(BuildNavMesh builder)
+	{
+		
+		navMesh = ScriptableObject.CreateInstance<NavigationMesh>();
+		builder.BuildMesh(navMesh, cellSize, toggleLightClamping, maxLightIntensity, minCellHeight, maxCellHeight);
+		Debug.LogFormat("Mesh has been built. It now has {0} nodes", navMesh.nodes.Count);
+		AssetDatabase.CreateAsset(navMesh, "Assets/AceadePathfinding/NavMeshes/" + meshName + ".asset");
+		AssetDatabase.SaveAssets();
+		Selection.activeObject = navMesh;
+	}
+
 	void LoadMeshes()
 	{
-		GameManager.LoadNavMeshes();
+//		GameManager.LoadNavMeshes();
 	}
 	
 }

@@ -15,7 +15,7 @@ public class Node
 
 	public bool isWalkable;
 
-	public string ToString()
+	public override string ToString()
 	{
 		return string.Format("Node at {0} has illumination {1} and {2} walkable", position, illumination, isWalkable? "is":"is not");
 	}

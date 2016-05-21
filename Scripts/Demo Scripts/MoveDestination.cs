@@ -15,22 +15,23 @@ public class MoveDestination : MonoBehaviour {
 	public Camera mainCamera;
 
 	[Tooltip("The sample agent")]
-	public GameObject agent;
+	public AgentStateMachine agent;
 
-	private Transform myTrans;
+	Transform myTrans;
 
-	private Ray ray;
+	Ray ray;
 
-	private RaycastHit hit;
+	RaycastHit hit;
 
 	void Start()
 	{
 		myTrans = transform;
 
-		GameManager.LoadNavMeshes();
-
 		if (mainCamera == null)
+		{
 			mainCamera = Camera.main;
+		}
+
 	}
 
 	// Update is called once per frame
@@ -47,8 +48,7 @@ public class MoveDestination : MonoBehaviour {
 			if (Physics.Raycast(ray, out hit))
 			{
 				myTrans.position = hit.point;
-				agent.SetActive(true);
-
+				agent.SetDestination(hit.point);
 			}
 
 			Invoke ("resetMovement", delay);
@@ -58,7 +58,6 @@ public class MoveDestination : MonoBehaviour {
 
 	void resetMovement()
 	{
-		agent.GetComponent<AStar>().SetDestination(myTrans.position);
 		canMove = true;
 	}
 }
