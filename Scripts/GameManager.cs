@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -31,9 +32,10 @@ public class GameManager : MonoBehaviour {
 	/// <param name="newLevel">New level.</param>
 	public static void ChangeLevel(string newLevel)
 	{
-		if (navMeshes.ContainsKey(newLevel) )
-			currentNavMesh = navMeshes[newLevel];
-		Application.LoadLevel(newLevel);
+//		if (navMeshes.ContainsKey(newLevel) )
+//			currentNavMesh = navMeshes[newLevel];
+//		Application.LoadLevel(newLevel);
+		SceneManager.LoadScene(newLevel);
 	}
 
 	/// <summary>

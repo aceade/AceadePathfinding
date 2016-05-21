@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,11 +7,15 @@ using System.Linq;
 /// hashing on a 3D position.
 /// </summary>
 
+
 [System.Serializable]
-public class NavigationMesh
+public class NavigationMesh : ScriptableObject
 {
 	[HideInInspector]
 	public Dictionary<SerializableVector3, Node> nodes = new Dictionary<SerializableVector3, Node>();
+
+	public List<SerializableVector3> keys;
+	public List<Node> values;
 
 	[HideInInspector]
 	public Dictionary<Node, List<Node>> neighboursDict = new Dictionary<Node, List<Node>>();
@@ -38,17 +41,19 @@ public class NavigationMesh
 	/// <param name="requestPos">Requested position.</param>
 	public Node getNodeFromPosition(SerializableVector3 requestPos)
 	{
+		Debug.LogFormat("Looking for a node near {0}", requestPos);
 		Node theNode;
 
 		if (nodes.ContainsKey(requestPos))
+		{
 			theNode = nodes[requestPos];
+		}
 		else
 		{
 //			Debug.Log("Need a full check");
-			theNode = nodes.Values.Where(d=> 
-			                      (Mathf.Abs(d.position.x - requestPos.x) < cellSize * 1.5f)
-			                      && (Mathf.Abs(d.position.y - requestPos.y) <= maxCellHeight)
-			                      && (Mathf.Abs(d.position.z - requestPos.z) < cellSize * 1.5f) ) .FirstOrDefault();
+			theNode = nodes.Values.Aggregate((d, n) => Vector3.Distance(d.position, requestPos) < 
+				Vector3.Distance(n.position, requestPos) ? d:n);
+			Debug.LogFormat("A full check gave a Node of {0}", theNode);
 		}
 
 		return theNode;
@@ -69,13 +74,14 @@ public class NavigationMesh
 	/// </summary>
 	/// <returns>The neighbours of node.</returns>
 	/// <param name="theNode">The node.</param>
+	/// <param name="ignoreUnwalkableNodes">If set to <c>true</c>, unwalkable Nodes will be ignored.</param>
 	public List<Node> GetNeighboursOfNode(Node theNode, bool ignoreUnwalkableNodes)
 	{
 		List<Node> neighbours = neighboursDict[theNode];
 		
-		if (ignoreUnwalkableNodes == true)
+		if (ignoreUnwalkableNodes)
 		{
-			neighbours.RemoveAll(n=> n.isWalkable == false);
+			neighbours.RemoveAll(n=> !n.isWalkable);
 		}
 		
 		return neighbours;
@@ -85,7 +91,7 @@ public class NavigationMesh
 	/// <summary>
 	/// Adds a node to the mesh at a specified position.
 	/// </summary>
-	/// <param name="position">Position.</param>
+	/// <param name="nodePosition">Position of the Node.</param>
 	/// <param name="theNode">The node.</param>
 	public void AddNode(SerializableVector3 nodePosition, Node theNode)
 	{
@@ -93,15 +99,40 @@ public class NavigationMesh
 	}
 
 	/// <summary>
-	/// Sets the name of the mesh.
+	/// Stores the dictionary. Unity doesn't actually serialise them, so this is a workaround.
 	/// </summary>
-	/// <param name="name">Name. Must match the name of the level, and end in " NavMesh" 
-	/// (note the space)</param>
-	public void SetName(string name)
+	public void StoreDictionary()
 	{
-		int index = name.IndexOf(" NavMesh");
-		meshName = name.Remove(index);
-		Debug.Log("The name of the mesh is (" + meshName + ")");
+		keys.Clear();
+		keys.AddRange(nodes.Keys);
+		values.Clear();
+		values.AddRange(nodes.Values);
 	}
 
+	public void SetupDictionary()
+	{
+		if (nodes.Count == 0)
+		{
+			nodes = Enumerable.Range(0, keys.Count).ToDictionary(i => keys[i], i => values[i]);
+		}
+		if (neighboursDict.Count == 0)
+		{
+			for (int j = 0; j < values.Count; j++)
+			{
+				List<Node> neighbours = GetNeighbours(values[j], false);
+				neighboursDict.Add(values[j], neighbours);
+			}
+		}
+
+	}
+
+	List<Node> GetNeighbours(Node theNode, bool removeWalkableNodes)
+	{
+		List<Node> neighbours = values.Where(d=> Vector3.Distance(d.position, theNode.position) < cellSize * 1.5f).ToList();
+		if (removeWalkableNodes)
+		{
+			neighbours.RemoveAll(d=> !d.isWalkable);
+		}
+		return neighbours;
+	}
 }

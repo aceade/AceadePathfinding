@@ -9,7 +9,6 @@ using System.Linq;
 
 public class AStar : FindPathBase {
 
-	NavigationMesh navMesh;
 
 	Node currentNode, startNode, endNode;
 
@@ -21,10 +20,6 @@ public class AStar : FindPathBase {
 
 	float seekTime, startTime;
 
-	int distanceToTarget;
-
-	int distanceFromStart;
-
 	int totalScore = 0;
 
 	AgentStateMachine stateMachine;
@@ -32,16 +27,16 @@ public class AStar : FindPathBase {
 	// Use this for initialization
 	protected override void Start () 
 	{
-		navMesh = GameManager.getCurrentNavMesh();
 		stateMachine = GetComponent<AgentStateMachine>();
-		Debug.Log(navMesh + ", " + stateMachine);
+		mesh.SetupDictionary();
+		Debug.LogFormat("The mesh has {0} nodes", mesh.nodes.Count);
 	}
 
 	/// <summary>
 	/// Sets the agent's destination.
 	/// </summary>
-	/// <param name="position">Position.</param>
-	public override void SetDestination(Vector3 position)
+	/// <param name="destination">Position.</param>
+	public override void SetDestination(Vector3 destination)
 	{
 
 		startTime = Time.time;
@@ -51,7 +46,7 @@ public class AStar : FindPathBase {
 		// I recommend running the following inside a separate thread
 		Loom.RunAsync(()=> {
 
-			findPath(start, position);
+			findPath(start, destination);
 
 		});
 	}
@@ -63,28 +58,28 @@ public class AStar : FindPathBase {
 	/// <param name="end">End.</param>
 	protected override void findPath(Vector3 start, Vector3 end)
 	{
-		Debug.Log("Looking for a path from " + start + " to " + end);
+		Debug.LogFormat("Looking for a path from {0} to {1}", start, end);
 
-		startNode = navMesh.getNodeFromPosition(start);
-		endNode = navMesh.getNodeFromPosition(end);
+		startNode = mesh.getNodeFromPosition(start);
+		endNode = mesh.getNodeFromPosition(end);
 
-		Debug.Log("The start and end nodes are " +startNode + " and " + endNode );
+		Debug.LogFormat("The start and end nodes are {0} and {1}", startNode, endNode );
 
 		totalScore = 0;
-		base.openList.Clear();
+		openList.Clear();
 		closedList.Clear();
 		visitedNodes.Clear();
 		path.Clear();
 
 		currentNode = startNode;
 		totalScore = calculateDistanceCost(startNode, endNode);
-		base.openList.Add(currentNode, totalScore);
+		openList.Add(currentNode, totalScore);
 
-		while (base.openList.Count > 0)
+		while (openList.Count > 0)
 		{
 			// choose the lowest-cost node as the current Node
-			currentNode = base.openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
-			Debug.Log("Current node is at " + currentNode.position);
+			currentNode = openList.Aggregate((prev, next)=> next.Value <= prev.Value ? next: prev ).Key;
+			Debug.LogFormat("Current node is {0}", currentNode);
 
 			// add exit conditions here.
 			if (currentNode == endNode)
@@ -95,8 +90,8 @@ public class AStar : FindPathBase {
 
 
 			// get the neighbours of this node
-			List<Node> currentNeighbours = navMesh.GetNeighboursOfNode(currentNode, true);
-			Debug.Log(currentNeighbours);
+			List<Node> currentNeighbours = mesh.GetNeighboursOfNode(currentNode, true);
+			Debug.Log(currentNeighbours.Count);
 
 			for (int i = 0; i < currentNeighbours.Count; i++)
 			{
@@ -104,24 +99,26 @@ public class AStar : FindPathBase {
 				Debug.Log("Examining the neighbour at " + currentNeighbour.position);
 
 				// skip this neighbour if it isn't walkable or has already been considered
-				if (currentNeighbour.isWalkable == false || closedList.Contains(currentNeighbour) )
+				if (!currentNeighbour.isWalkable || closedList.Contains(currentNeighbour) )
+				{
 					continue;
+				}
 
-				if (base.openList.ContainsKey(currentNeighbour) == false)
+				if (!openList.ContainsKey(currentNeighbour))
 				{
 					int tempGScore = calculateDistanceCost(currentNode, currentNeighbour);
 					int tempFScore = calculateDistanceCost(currentNeighbour, endNode);
 
 					totalScore = tempGScore + tempFScore;
 
-					base.openList.Add(currentNeighbour, totalScore);
+					openList.Add(currentNeighbour, totalScore);
 
 					visitedNodes[currentNeighbour] = currentNode;
 				}
 			}
 
 			// remove the current node from further consideration.
-			base.openList.Remove(currentNode);
+			openList.Remove(currentNode);
 			closedList.Add (currentNode);
 
 
@@ -135,18 +132,18 @@ public class AStar : FindPathBase {
 	/// </summary>
 	protected override void buildPathFrom(Node finalNode)
 	{
-		Debug.Log("Retracing the path from " + visitedNodes.Count + " nodes");
+		Debug.LogFormat("Retracing the path from {0} nodes", visitedNodes.Count);
 		Node thisNode = finalNode;
 
 		while (thisNode != startNode)
 		{
 			Node tempNode = visitedNodes[thisNode];
-			Debug.Log("Adding node at " + tempNode.position.ToString() + " to path");
+			Debug.LogFormat("Adding node at {0} to path", tempNode.position);
 			path.Add (tempNode);
 			thisNode = tempNode;
 		}
 
-		Debug.Log("Built a path of " + path.Count + " noeds");
+		Debug.LogFormat("Built a path of {0} nodes", path.Count);
 
 		// send the path to the external class here
 		// If using a multithreading package, don't forget
@@ -185,9 +182,9 @@ public class AStar : FindPathBase {
 	{
 		GUI.skin.box.wordWrap = true;
 
-		if (navMesh != null)
+		if (mesh != null)
 		{
-			GUI.Box(new Rect(20, 200, 100, 100), "Nav mesh has " + navMesh.nodes.Keys.Count + " positions" );
+			GUI.Box(new Rect(20, 200, 100, 100), "Nav mesh has " + mesh.nodes.Count + " positions" );
 		}
 	}
 #endif

@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 /// <summary>
 /// A pathfinding Node is a position with additional attributes.
@@ -17,4 +15,8 @@ public class Node
 
 	public bool isWalkable;
 
+	public string ToString()
+	{
+		return string.Format("Node at {0} has illumination {1} and {2} walkable", position, illumination, isWalkable? "is":"is not");
+	}
 }

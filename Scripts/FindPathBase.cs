@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 public abstract class FindPathBase : MonoBehaviour {
 
-	protected NavigationMesh mesh;
+	public NavigationMesh mesh;
 
 	protected Dictionary<Node, int> openList = new Dictionary<Node, int>();
 	
@@ -26,9 +26,9 @@ public abstract class FindPathBase : MonoBehaviour {
 
 	protected virtual void Start()
 	{
-		mesh = GameManager.getCurrentNavMesh();
+		
 	}
 
-	protected abstract int calculateDistanceCost(Node nodeOne, Node nodeTwo);
+	protected abstract int calculateDistanceCost(Node firstNode, Node secondNode);
 	
 }

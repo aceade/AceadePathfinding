@@ -16,115 +16,113 @@ public class BuildNavMesh : MonoBehaviour {
 
 	private Vector3 bottomLeftCorner;
 
-	private Bounds cubeBounds;
+	Bounds cubeBounds;
 
 	public float cellSize = 1f;
 
-	private float width, length;
+	float width, length;
 
 	public float minCellHeight = 1f;
 
 	public float maxCellHeight = 3f;
 	
-	private RaycastHit hit;
+	RaycastHit hit;
 	
 	public List<int> walkableLayers;
 
 	public bool clampIllumination = false;
 
-	/// <summary>
-	/// Toggles whether or not to deploy this to the Dictionary.
-	/// </summary>
-	private bool testOnly;
-
-	NavigationMesh theMesh;
-
-
 	public GameObject[] ignoredObjects;
 
 	Dictionary<Node, List<Node>> neighboursOfNodes = new Dictionary<Node, List<Node>>();
+	NavigationMesh theMesh;
 
 	/// <summary>
 	/// Builds the mesh, using the full specified values.
 	/// </summary>
+	/// <param name = "mesh"></param>
 	/// <param name="newCellSize">New cell size.</param>
 	/// <param name="willClampIllumination">If set to <c>true</c> will clamp illumination.</param>
 	/// <param name="maxLightIntensity">Max light intensity.</param>
-	public void BuildMesh(float newCellSize, bool willClampIllumination, bool willDeploy, GameObject[] objects, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
+	public void BuildMesh (NavigationMesh mesh, float newCellSize, bool willClampIllumination, float maxLightIntensity, float newMinCellHeight, float newMaxCellHeight)
 	{
-		testOnly = willDeploy;
-		EnableUnits(false);
+		ignoredObjects = GameObject.FindGameObjectsWithTag("NavMeshIgnore").ToArray();
+		EnableUnits (false);
 
+		theMesh = mesh;
+		theMesh.nodes = new Dictionary<SerializableVector3, Node>();
+		theMesh.neighboursDict = new Dictionary<Node, List<Node>>();
+		theMesh.keys = new List<SerializableVector3>();
+		theMesh.values = new List<Node>();
+
+		neighboursOfNodes.Clear();
 		cellSize = newCellSize;
 		clampIllumination = willClampIllumination;
 		minCellHeight = newMinCellHeight;
 		maxCellHeight = newMaxCellHeight;
+		theMesh.minCellHeight = minCellHeight;
+		theMesh.maxCellHeight = maxCellHeight;
+		theMesh.cellSize = cellSize;
 
-		cubeBounds = GetComponent<Collider>().bounds;
+		cubeBounds = GetComponent<Collider> ().bounds;
 		bottomLeftCorner = cubeBounds.center - cubeBounds.extents
 			+ (Vector3.up * cubeBounds.size.y);
 
-		Debug.Log("The bottom left corner is " + bottomLeftCorner);
-
-		theMesh = new NavigationMesh();
-		theMesh.SetName(gameObject.name);
-		theMesh.maxCellHeight = maxCellHeight;
-		theMesh.minCellHeight = minCellHeight;
-		theMesh.origin = bottomLeftCorner;
-		theMesh.cellSize = cellSize;
+		Debug.Log ("The bottom left corner is " + bottomLeftCorner);
 
 		width = cubeBounds.size.x / cellSize;
 		length = cubeBounds.size.z / cellSize;
 
 		Vector3 tempPos = bottomLeftCorner;
 
-		for (float x = bottomLeftCorner.x; x <= width; x += cellSize)
-		{
-			for (float z = bottomLeftCorner.z; z <= length; z += cellSize)
-			{
-				tempPos.x = x + cellSize/2;
-				tempPos.z = z + cellSize/2;
+		for (float x = bottomLeftCorner.x; x <= width; x += cellSize) {
+			for (float z = bottomLeftCorner.z; z <= length; z += cellSize) {
+				tempPos.x = x + cellSize / 2;
+				tempPos.z = z + cellSize / 2;
 
-				if (Physics.Raycast(tempPos, Vector3.down, out hit, cubeBounds.size.y) )
-				{
+				if (Physics.Raycast (tempPos, Vector3.down, out hit, cubeBounds.size.y)) {
 					Vector3 hitPoint = hit.point;
-					SerializableVector3 newPos = new SerializableVector3(hitPoint.x, hitPoint.y, hitPoint.z);
-					Node newNode = new Node();
+					var newPos = new SerializableVector3 (hitPoint.x, hitPoint.y, hitPoint.z);
+					var newNode = new Node ();
 					newNode.position = newPos;
-					theMesh.AddNode(newPos, newNode);
+					theMesh.AddNode (newPos, newNode);
 
-//					Debug.Log("New node at " +hitPoint);
+					Debug.LogFormat("New node at {0}", newPos);
 
-					if (walkableLayers.Contains(hit.collider.gameObject.layer) )
+					if (walkableLayers.Contains (hit.collider.gameObject.layer))
+					{
 						newNode.isWalkable = true;
+					}
 					else
+					{
 						newNode.isWalkable = false;
+					}
 
-					newNode.height = Mathf.Clamp(bottomLeftCorner.y - hitPoint.y, minCellHeight, maxCellHeight);
+					newNode.height = Mathf.Clamp (bottomLeftCorner.y - hitPoint.y, minCellHeight, maxCellHeight);
 
 					Bounds hitBounds = hit.collider.bounds;
 //					Debug.Log(hitBounds.size.y);
-					if ( bottomLeftCorner.y - (hitBounds.extents.y + hitPoint.y) >= minCellHeight )
-					{
+					if (bottomLeftCorner.y - (hitBounds.extents.y + hitPoint.y) >= minCellHeight) {
 
 						Vector3 underPos = hitPoint + (Vector3.down * hitBounds.size.y);
 
-						if (Physics.Raycast(underPos, Vector3.down, out hit))
-						{
+						if (Physics.Raycast (underPos, Vector3.down, out hit)) {
 //							Debug.Log("New node under an obstacle at " + hit.point);
-							Node underNode = new Node();
-							newPos = new SerializableVector3(hit.point.x, hit.point.y, hit.point.z);
+							var underNode = new Node ();
+							newPos = new SerializableVector3 (hit.point.x, hit.point.y, hit.point.z);
 							underNode.position = newPos;
 							theMesh.AddNode (newPos, underNode);
 
-							underNode.height = Mathf.Clamp(hitPoint.y - hit.point.y, minCellHeight, maxCellHeight);
+							underNode.height = Mathf.Clamp (hitPoint.y - hit.point.y, minCellHeight, maxCellHeight);
 
-							if (walkableLayers.Contains( hit.collider.gameObject.layer) )
+							if (walkableLayers.Contains (hit.collider.gameObject.layer)) 
 							{
 								underNode.isWalkable = true;
-							}
-							else
+							} 
+							else 
+							{
 								underNode.isWalkable = false;
+							}
 						}
 
 					}
@@ -137,15 +135,9 @@ public class BuildNavMesh : MonoBehaviour {
 		GatherNeighbours();
 		CalculateIllumination(maxLightIntensity);
 		FixEdges();
-		theMesh.SetNeighbours(neighboursOfNodes);
-		
-		// add this to the list of meshes
-		if (!testOnly)
-		{
-			GameManager.AddNavMesh(theMesh);
-		}
 
 		EnableUnits(true);
+		theMesh.StoreDictionary();
 
 	}
 
@@ -159,18 +151,18 @@ public class BuildNavMesh : MonoBehaviour {
 			List<Node> neighbours = FindNeighbours(node, cellSize * 1.5f);
 			neighboursOfNodes.Add (node, neighbours);
 		}
+		theMesh.SetNeighbours(neighboursOfNodes);
 	}
 	
 	/// <summary>
 	/// Finds the neighbours of the specified node.
 	/// </summary>
 	/// <param name="theNode">The node.</param>
+	/// <param name="distance">The maximum search distance.</param>
 	List<Node> FindNeighbours(Node theNode, float distance)
 	{
 		List<Node> neighbours = theMesh.nodes.Values.Where(d=> Vector3.Distance(theNode.position, d.position) <= distance ).ToList();
-		
 		neighbours.Remove(theNode);
-		
 		return neighbours;
 	}
 	
@@ -195,14 +187,14 @@ public class BuildNavMesh : MonoBehaviour {
 	void RemoveUselessNodes()
 	{
 		Debug.Log("Removing useless nodes from the map");
-		List<Node> uselessNodes = new List<Node>();
+		var uselessNodes = new List<Node>();
 		Node theNode;
 		foreach (KeyValuePair<SerializableVector3, Node> pair in theMesh.nodes)
 		{
 			theNode = pair.Value;
 			List<Node> longNeighbours = FindNeighbours(theNode, cellSize * 3f);
 			
-			if (longNeighbours.Count(d=> d.isWalkable == true) == 0)
+			if (longNeighbours.Count(d=> d.isWalkable) == 0)
 			{
 				uselessNodes.Add(theNode);
 			}
@@ -234,7 +226,7 @@ public class BuildNavMesh : MonoBehaviour {
 			Light theLight = lights[i];
 			Node theLightNode = theMesh.getNodeFromPosition(theLight.transform.position);
 			List<Node> neighbours = neighboursOfNodes[theLightNode];
-			List<Node> affectedNodes = new List<Node>();
+			var affectedNodes = new List<Node>();
 
 			// loop through nodes affected by this light
 			for (int j = 0; j < neighbours.Count; j++)
@@ -261,7 +253,7 @@ public class BuildNavMesh : MonoBehaviour {
 				affectedNodes[k].illumination += illumination;
 
 				// Optionally, clamp it to the range [0,1]
-				if (clampIllumination == true)
+				if (clampIllumination)
 				{
 					affectedNodes[k].illumination = Mathf.Clamp(affectedNodes[k].illumination, 0f, upperLightIntensity);
 				}
@@ -284,26 +276,25 @@ public class BuildNavMesh : MonoBehaviour {
 		}
 	}
 
-# if UNITY_EDITOR
-	void OnDrawGizmosSelected()
-	{
-		if (theMesh == null ) 
-			return;
-
-		// each node on the map
-		foreach (SerializableVector3 position in theMesh.nodes.Keys)
-		{
-			Node theNode = theMesh.getNodeFromPosition(position);
-			Gizmos.color = theNode.isWalkable ? Color.green: Color.red;
-			Gizmos.DrawCube(position, Vector3.one * cellSize * 0.75f);
-
-		}
-	}
-#endif
 
 	public void ToggleClamping()
 	{
 		clampIllumination = !clampIllumination;
 		Debug.Log("Clamping Illumination: " + clampIllumination);
 	}
+
+	void OnGizmosDrawSelected()
+	{
+		if (theMesh.nodes.Count == 0)
+		{
+			Debug.LogError("The mesh is empty!");
+		}
+
+		foreach (KeyValuePair<SerializableVector3, Node> pair in theMesh.nodes)
+		{
+			Gizmos.color = pair.Value.isWalkable ? Color.green:Color.red;
+			Gizmos.DrawCube(pair.Key, theMesh.cellSize * Vector3.one * 0.75f);
+		}
+	}
+
 }
